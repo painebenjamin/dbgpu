@@ -24,6 +24,7 @@ setup(
     license="MIT",
     author="Benjamin Paine",
     author_email="painebenjamin@gmail.com",
+    url="https://github.com/painebenjamin/dbgpu",
     package_dir={"": "src"},
     packages=find_packages("src"),
     package_data={"dbgpu": ["py.typed", "version.txt", "data.pkl"]},
