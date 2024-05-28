@@ -8,7 +8,7 @@ from dbgpu.version import version
 from dbgpu.constants import *
 
 @click.group(name="dbgpu")
-@click.version_option(prog_name="dbgpu", version=version)
+@click.version_option(version=version, message="%(version)s")
 def main() -> None:
     """
     DBGPU command-line tools.
@@ -63,14 +63,26 @@ def build(
 
 @main.command(short_help="Looks up a GPU by name.")
 @click.argument("name", type=str)
-def lookup(name: str) -> None:
+@click.option("--database", "-d", type=click.Path(), help="Path to GPU database. Will use default if not provided.")
+@click.option("--fuzzy", "-f", is_flag=True, help="Use fuzzy matching.")
+def lookup(
+    name: str,
+    database: Optional[str]=None,
+    fuzzy: bool=False
+) -> None:
     """
     Looks up a GPU by name.
     """
     from dbgpu.db import GPUDatabase
-    db = GPUDatabase.default()
+    if database:
+        db = GPUDatabase.from_file(database)
+    else:
+        db = GPUDatabase.default()
     try:
-        click.echo(db[name])
+        if fuzzy:
+            click.echo(db.search(name))
+        else:
+            click.echo(db[name])
     except KeyError:
         click.echo(f"GPU '{name}' not found.")
 

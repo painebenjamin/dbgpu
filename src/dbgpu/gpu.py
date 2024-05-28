@@ -984,4 +984,11 @@ class GPUSpecification:
             import tabulate
             return self.tabulate()
         except ImportError:
-            return f"GPUSpecification({self.name})"
+            return "\n".join([
+                "-"*len(self.name),
+                self.name,
+                "-"*len(self.name),
+            ] + [
+                f"{label}: {value}"
+                for label, value in self.labeled_fields()
+            ])

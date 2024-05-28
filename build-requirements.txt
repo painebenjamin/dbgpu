@@ -1,0 +1,14 @@
+mypy
+importchecker
+types-tabulate
+types-requests
+types-tqdm
+types-beautifulsoup4
+pandas-stubs
+requests
+tabulate
+thefuzz
+click
+pydantic
+tqdm
+beautifulsoup4

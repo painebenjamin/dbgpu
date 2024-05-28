@@ -10,8 +10,9 @@ build_deps = ["requests", "beautifulsoup4", "tqdm"]
 extra_deps = {
     "socks": ["requests[socks]"],
     "tabulate": ["tabulate"],
+    "fuzz": ["thefuzz"],
     "build": build_deps,
-    "all": ["requests[socks]", "tabulate"] + build_deps,
+    "all": ["requests[socks]", "tabulate", "thefuzz"] + build_deps,
 }
 
 setup(

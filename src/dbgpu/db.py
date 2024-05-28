@@ -80,6 +80,31 @@ class GPUDatabase:
             ])
         return self._dataframe
 
+    @property
+    def names(self) -> List[str]:
+        """
+        Returns a list of the names of all GPU specifications in the database.
+        """
+        if not hasattr(self, "_names"):
+            self._names = list(self.specifications.keys())
+        return self._names
+
+    def search(self, name: str, min_score: int=75) -> GPUSpecification:
+        """
+        Uses fuzzy matching to find the GPU specification with the given name.
+        """
+        try:
+            from thefuzz import process # type: ignore[import-not-found,import-untyped,unused-ignore]
+        except ImportError:
+            try:
+                from fuzzywuzzy import process # type: ignore[import-not-found,import-untyped,unused-ignore]
+            except ImportError:
+                raise ImportError("thefuzz or fuzzywuzzy is required to search for GPU specifications. Run `pip install thefuzz` to install it.")
+        [(name, score)] = process.extract(name, self.names, limit=1)
+        if score < min_score:
+            raise KeyError(f"GPU specification with name '{name}' not found.")
+        return self[name]
+
     def __getitem__(self, key: str) -> GPUSpecification:
         """
         Returns the GPU specification with the given name.
