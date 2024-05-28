@@ -1,6 +1,6 @@
 # DBGPU
 
-A small, easy-to-use open source database of over 2000 GPUs with architecture, manufacturing, API support and performance details sources from [TechPowerUp](https://www.techpowerup.com/gpu-specs/).
+A small, easy-to-use open source database of over 2000 GPUs with architecture, manufacturing, API support and performance details sourced from [TechPowerUp](https://www.techpowerup.com/gpu-specs/).
 
 # Installation
 
