@@ -259,4 +259,4 @@ DBGPU is licensed under the MIT License. See [LICENSE](LICENSE) for more informa
 
 # Acknowledgements
 
-This project is not affiliated with TechPowerUp. The database is sourced from [TechPowerUp](https://www.techpowerup.com/gpu-specs/), which is a great resource for GPU information. If you find this project useful, please consider supporting them.
+This project is not affiliated with [TechPowerUp](https://www.techpowerup.com/gpu-specs/), but could not exist without their website. If you find this project useful, please consider supporting them.
