@@ -10,7 +10,7 @@ DBGPU is available on PyPI and can be installed with pip:
 pip install dbgpu
 ```
 
-In order to be as minimal as possible, some features are only available as additional dependencies. To install any additional package, use `pip install dbgpu[package]`:
+In order to be as minimal as possible (the package is only `170kb` compressed,) some features are only available as additional dependencies. To install any additional package, use `pip install dbgpu[package]`:
 - `dbgpu[tabulate]` will install [tabulate](https://github.com/astanin/python-tabulate/) for pretty-printing tables.
 - `dbgpu[fuzz]` will install [thefuzz](https://github.com/seatgeek/thefuzz) for fuzzy searching.
 - `dbgpu[build]` will install [requests](https://docs.python-requests.org/en/master/), [beautifulsoup4](https://beautiful-soup-4.readthedocs.io/) and [tqdm](https://tqdm.github.io/) for building the database.
