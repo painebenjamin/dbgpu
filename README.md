@@ -210,6 +210,12 @@ $ dbgpu lookup "GeForce GTX 1080"
 
 This is the output with `tabulate` available; see above for an example without it installed.
 
+Here is a potentially useful bash one-liner to look up the local machine, assuming the availability of the `nvidia-smi` tool:
+
+```bash
+dbgpu lookup "$(nvidia-smi --query-gpu=name --format=csv,noheader | awk '{$1=""; print $0}' | cut -c2-)"
+```
+
 ### Building a Database
 
 When installing from PyPI, the latest database is included. If you want to build the database yourself, you can use the `dbgpu` command line tool:
