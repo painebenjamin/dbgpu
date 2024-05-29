@@ -26,7 +26,7 @@ from dbgpu import GPUDatabase
 database = GPUDatabase.default()
 spec = database["GeForce GTX 1080"]
 # Using fuzzy search (slower):
-# spec = database.lookup("GTX 1080")
+# spec = database.search("GTX 1080")
 print(spec)
 ```
 
@@ -155,7 +155,7 @@ Supported formats are JSON, CSV and PKL. The PKL format is the fastest to load a
 ```sh
 $ dbgpu lookup "GeForce GTX 1080"
 # Using fuzzy search (slower):
-# dbgpu lookup "GTX 1080" --fuzzy
+# dbgpu lookup GTX1080 --fuzzy
 
 ╒═══════════════════════════════════════════════════════════════════════╕
 │ GeForce GTX 1080                                                      │
