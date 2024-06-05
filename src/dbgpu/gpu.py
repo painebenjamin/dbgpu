@@ -623,6 +623,13 @@ class GPUSpecification:
         return asdict(self)
 
     @property
+    def manufacturer_prefixed_name(self) -> str:
+        """
+        Returns the GPU name prefixed with the manufacturer.
+        """
+        return f"{self.manufacturer} {self.name}"
+
+    @property
     def process_size_str(self) -> str:
         """
         Returns the process size as a formatted string.

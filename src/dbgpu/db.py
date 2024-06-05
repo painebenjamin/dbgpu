@@ -20,11 +20,14 @@ class GPUDatabase:
     A class to look up GPU specifications.
     """
     specifications: Dict[str, GPUSpecification]
+    manufacturer_prefixed_name_map: Dict[str, str]
 
     def __init__(self, specifications: List[GPUSpecification] = []) -> None:
         self.specifications = {}
+        self.manufacturer_prefixed_name_map = {}
         for spec in specifications:
-            self.specifications[spec.name] = spec
+            self.specifications[spec.name.lower()] = spec
+            self.manufacturer_prefixed_name_map[spec.manufacturer_prefixed_name.lower()] = spec.name.lower()
 
     @classmethod
     def from_file(cls, path: str) -> GPUDatabase:
@@ -109,4 +112,7 @@ class GPUDatabase:
         """
         Returns the GPU specification with the given name.
         """
+        key = key.lower()
+        if key in self.manufacturer_prefixed_name_map:
+            key = self.manufacturer_prefixed_name_map[key]
         return self.specifications[key]
