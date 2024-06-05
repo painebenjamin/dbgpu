@@ -10,7 +10,7 @@ DBGPU is available on PyPI and can be installed with pip:
 pip install dbgpu
 ```
 
-In order to be as minimal as possible, some features are only available as additional dependencies. To install any additional package, use `pip install dbgpu[package]`:
+In order to be as minimal as possible (the package is only `170kb` compressed,) some features are only available as additional dependencies. To install any additional package, use `pip install dbgpu[package]`:
 - `dbgpu[tabulate]` will install [tabulate](https://github.com/astanin/python-tabulate/) for pretty-printing tables.
 - `dbgpu[fuzz]` will install [thefuzz](https://github.com/seatgeek/thefuzz) for fuzzy searching.
 - `dbgpu[build]` will install [requests](https://docs.python-requests.org/en/master/), [beautifulsoup4](https://beautiful-soup-4.readthedocs.io/) and [tqdm](https://tqdm.github.io/) for building the database.
@@ -26,7 +26,7 @@ from dbgpu import GPUDatabase
 database = GPUDatabase.default()
 spec = database["GeForce GTX 1080"]
 # Using fuzzy search (slower):
-# spec = database.lookup("GTX 1080")
+# spec = database.search("GTX 1080")
 print(spec)
 ```
 
@@ -155,7 +155,7 @@ Supported formats are JSON, CSV and PKL. The PKL format is the fastest to load a
 ```sh
 $ dbgpu lookup "GeForce GTX 1080"
 # Using fuzzy search (slower):
-# dbgpu lookup "GTX 1080" --fuzzy
+# dbgpu lookup GTX1080 --fuzzy
 
 ╒═══════════════════════════════════════════════════════════════════════╕
 │ GeForce GTX 1080                                                      │
@@ -209,6 +209,12 @@ $ dbgpu lookup "GeForce GTX 1080"
 ```
 
 This is the output with `tabulate` available; see above for an example without it installed.
+
+Here is a potentially useful bash one-liner to look up the local machine, assuming the availability of the `nvidia-smi` tool:
+
+```bash
+dbgpu lookup "$(nvidia-smi --query-gpu=name --format=csv,noheader | awk '{$1=""; print $0}' | cut -c2-)"
+```
 
 ### Building a Database
 
