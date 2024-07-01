@@ -8,6 +8,7 @@ import pickle
 from typing import Dict, List, TYPE_CHECKING
 
 from dbgpu.constants import DEFAULT_GPU_DB_PATH, DEFAULT_GPU_DB
+from dbgpu.util import safe_name
 
 if TYPE_CHECKING:
     from pandas import DataFrame
@@ -26,8 +27,8 @@ class GPUDatabase:
         self.specifications = {}
         self.manufacturer_prefixed_name_map = {}
         for spec in specifications:
-            self.specifications[spec.name.lower()] = spec
-            self.manufacturer_prefixed_name_map[spec.manufacturer_prefixed_name.lower()] = spec.name.lower()
+            self.specifications[spec.name_key] = spec
+            self.manufacturer_prefixed_name_map[spec.manufacturer_prefixed_name_key] = spec.name_key
 
     @classmethod
     def from_file(cls, path: str) -> GPUDatabase:
@@ -89,18 +90,28 @@ class GPUDatabase:
         Returns a list of the names of all GPU specifications in the database.
         """
         if not hasattr(self, "_names"):
-            self._names = list(self.specifications.keys())
+            self._names = [
+                spec.name
+                for spec in self.specifications.values()
+            ]
         return self._names
+
+    @property
+    def specs(self) -> List[GPUSpecification]:
+        """
+        Returns a list of all GPU specifications in the database.
+        """
+        return list(self.specifications.values())
 
     def search(self, name: str, min_score: int=75) -> GPUSpecification:
         """
         Uses fuzzy matching to find the GPU specification with the given name.
         """
         try:
-            from thefuzz import process # type: ignore[import-not-found,import-untyped,unused-ignore]
+            from thefuzz import process # type: ignore[import]
         except ImportError:
             try:
-                from fuzzywuzzy import process # type: ignore[import-not-found,import-untyped,unused-ignore]
+                from fuzzywuzzy import process # type: ignore[import]
             except ImportError:
                 raise ImportError("thefuzz or fuzzywuzzy is required to search for GPU specifications. Run `pip install thefuzz` to install it.")
         [(name, score)] = process.extract(name, self.names, limit=1)
@@ -112,7 +123,7 @@ class GPUDatabase:
         """
         Returns the GPU specification with the given name.
         """
-        key = key.lower()
+        key = safe_name(key)
         if key in self.manufacturer_prefixed_name_map:
             key = self.manufacturer_prefixed_name_map[key]
         return self.specifications[key]

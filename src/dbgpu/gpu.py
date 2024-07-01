@@ -9,7 +9,7 @@ from datetime import datetime, date
 from dataclasses import asdict
 
 from dbgpu.constants import *
-from dbgpu.util import chunk_iterable, reduce_units
+from dbgpu.util import chunk_iterable, reduce_units, safe_name
 
 if TYPE_CHECKING:
     from dataclasses import dataclass
@@ -623,13 +623,6 @@ class GPUSpecification:
         return asdict(self)
 
     @property
-    def manufacturer_prefixed_name(self) -> str:
-        """
-        Returns the GPU name prefixed with the manufacturer.
-        """
-        return f"{self.manufacturer} {self.name}"
-
-    @property
     def process_size_str(self) -> str:
         """
         Returns the process size as a formatted string.
@@ -651,12 +644,12 @@ class GPUSpecification:
         count = self.transistor_count_m
         if not count:
             return "Unknown"
-        units = ["million", "billion", "trillion"]
-        unit_index = 0
-        while count > 1000:
-            count /= 1000
-            unit_index += 1
-        return f"{count:,.1f} {units[unit_index]}"
+        value, unit = reduce_units(
+            count,
+            ["million", "billion", "trillion"],
+            threshold=UNIT_THRESHOLD,
+        )
+        return f"{value:,.1f} {unit}"
 
     @property
     def transistor_density_str(self) -> str:
@@ -666,12 +659,12 @@ class GPUSpecification:
         density = self.transistor_density_k_mm2
         if not density:
             return "Unknown"
-        units = ["thousand", "million", "billion"]
-        unit_index = 0
-        while density > 1000:
-            density /= 1000
-            unit_index += 1
-        return f"{density:,.1f} {units[unit_index]}/mm²"
+        value, unit = reduce_units(
+            density,
+            ["thousand", "million", "billion"],
+            threshold=UNIT_THRESHOLD,
+        )
+        return f"{value:,.1f} {unit}/mm²"
 
     @property
     def base_clock_str(self) -> str:
@@ -911,6 +904,20 @@ class GPUSpecification:
         """
         return "Unknown" if not self.ray_tracing_cores else f"{self.ray_tracing_cores:,}"
 
+    @property
+    def name_key(self) -> str:
+        """
+        Returns the name of the GPU, suitable for use as a key.
+        """
+        return safe_name(self.name)
+
+    @property
+    def manufacturer_prefixed_name_key(self) -> str:
+        """
+        Returns the GPU name prefixed with the manufacturer.
+        """
+        return f"{self.manufacturer.lower()}-{self.name_key}"
+
     def labeled_fields(self) -> List[Tuple[str, Optional[str]]]:
         """
         Returns a list of tuples with the field names and their formatted values.
@@ -961,6 +968,319 @@ class GPUSpecification:
             ("Half Float Performance", self.half_float_performance_str),
             ("Single Float Performance", self.single_float_performance_str),
             ("Double Float Performance", self.double_float_performance_str),
+        ]
+
+    def labeled_comparison_fields(self, other: GPUSpecification) -> List[Tuple[str, str]]:
+        """
+        Returns a list of tuples with the field names and their formatted values for comparison with another GPU.
+        """
+        name_difference_str = "!=" if self.gpu_name != other.gpu_name else ""
+        manufacturer_difference_str = "!=" if self.manufacturer != other.manufacturer else ""
+        architecture_difference_str = "!=" if self.architecture != other.architecture else ""
+        foundry_difference_str = "!=" if self.foundry != other.foundry else ""
+        chip_package_difference_str = "!=" if self.chip_package != other.chip_package else ""
+        release_date_difference_str = "!=" if self.release_date != other.release_date else ""
+        generation_difference_str = "!=" if self.generation != other.generation else ""
+        bus_interface_difference_str = "!=" if self.bus_interface != other.bus_interface else ""
+        directx_version_difference_str = "!=" if self.directx_version_str != other.directx_version_str else ""
+        opengl_version_difference_str = "!=" if self.opengl_version_str != other.opengl_version_str else ""
+        vulkan_version_difference_str = "!=" if self.vulkan_version_str != other.vulkan_version_str else ""
+        opencl_version_difference_str = "!=" if self.opencl_version_str != other.opencl_version_str else ""
+        cuda_version_difference_str = "!=" if self.cuda_version_str != other.cuda_version_str else ""
+        shader_model_version_difference_str = "!=" if self.shader_model_version_str != other.shader_model_version_str else ""
+        power_connectors_difference_str = "!=" if self.power_connectors != other.power_connectors else ""
+        display_connectors_difference_str = "!=" if self.display_connectors != other.display_connectors else ""
+        memory_type_difference_str = "!=" if self.memory_type != other.memory_type else ""
+
+        if self.process_size_nm and other.process_size_nm:
+            process_size_difference = other.process_size_nm - self.process_size_nm
+            process_size_difference_str = "{:+d} nm ({:+.1%})".format(
+                process_size_difference, process_size_difference / self.process_size_nm
+            ) if process_size_difference else ""
+        else:
+            process_size_difference_str = ""
+
+        if self.transistor_count_m and other.transistor_count_m:
+            transistor_count_difference = other.transistor_count_m - self.transistor_count_m
+            value, unit = reduce_units(
+                transistor_count_difference,
+                ["million", "billion", "trillion"],
+                threshold=UNIT_THRESHOLD,
+            )
+            transistor_count_difference_str = "{:+.1f} {:s} ({:+.1%})".format(
+                value, unit, transistor_count_difference / self.transistor_count_m
+            ) if transistor_count_difference else ""
+        else:
+            transistor_count_difference_str = ""
+
+        if self.transistor_density_k_mm2 and other.transistor_density_k_mm2:
+            transistor_density_difference = other.transistor_density_k_mm2 - self.transistor_density_k_mm2
+            value, unit = reduce_units(
+                transistor_density_difference,
+                ["thousand", "million", "billion"],
+                threshold=UNIT_THRESHOLD,
+            )
+            transistor_density_difference_str = "{:+.1f} {:s}/mm² ({:+.1%})".format(
+                value, unit, transistor_density_difference / self.transistor_density_k_mm2
+            ) if transistor_density_difference else ""
+        else:
+            transistor_density_difference_str = ""
+
+        if self.die_size_mm2 and other.die_size_mm2:
+            die_size_difference = other.die_size_mm2 - self.die_size_mm2
+            die_size_difference_str = "{:+.1f} mm² ({:+.1%})".format(
+                die_size_difference, die_size_difference / self.die_size_mm2
+            ) if die_size_difference else ""
+        else:
+            die_size_difference_str = ""
+
+        if self.base_clock_mhz and other.base_clock_mhz:
+            base_clock_difference = other.base_clock_mhz - self.base_clock_mhz
+            base_clock_difference_str = "{:+.1f} MHz ({:+.1%})".format(
+                base_clock_difference, base_clock_difference / self.base_clock_mhz
+            ) if base_clock_difference else ""
+        else:
+            base_clock_difference_str = ""
+
+        if self.boost_clock_mhz and other.boost_clock_mhz:
+            boost_clock_difference = other.boost_clock_mhz - self.boost_clock_mhz
+            boost_clock_difference_str = "{:+.1f} MHz ({:+.1%})".format(
+                boost_clock_difference, boost_clock_difference / self.boost_clock_mhz
+            ) if boost_clock_difference else ""
+        else:
+            boost_clock_difference_str = ""
+
+        if self.memory_clock_mhz and other.memory_clock_mhz:
+            memory_clock_difference = other.memory_clock_mhz - self.memory_clock_mhz
+            memory_clock_difference_str = "{:+.1f} MHz ({:+.1%})".format(
+                memory_clock_difference, memory_clock_difference / self.memory_clock_mhz
+            ) if memory_clock_difference else ""
+        else:
+            memory_clock_difference_str = ""
+
+        if self.memory_size_gb and other.memory_size_gb:
+            memory_size_difference = other.memory_size_gb - self.memory_size_gb
+            memory_size_difference_str = "{:+.1f} GB ({:+.1%})".format(
+                memory_size_difference, memory_size_difference / self.memory_size_gb
+            ) if memory_size_difference else ""
+        else:
+            memory_size_difference_str = ""
+
+        if self.memory_bus_bits and other.memory_bus_bits:
+            memory_bus_difference = other.memory_bus_bits - self.memory_bus_bits
+            memory_bus_difference_str = "{:+d} bit ({:+.1%})".format(
+                memory_bus_difference, memory_bus_difference / self.memory_bus_bits
+            ) if memory_bus_difference else ""
+        else:
+            memory_bus_difference_str = ""
+
+        if self.memory_bandwidth_gb_s and other.memory_bandwidth_gb_s:
+            memory_bandwidth_difference = other.memory_bandwidth_gb_s - self.memory_bandwidth_gb_s
+            memory_bandwidth_difference_str = "{:+.1f} GB/s ({:+.1%})".format(
+                memory_bandwidth_difference, memory_bandwidth_difference / self.memory_bandwidth_gb_s
+            ) if memory_bandwidth_difference else ""
+        else:
+            memory_bandwidth_difference_str = ""
+
+        if self.shading_units and other.shading_units:
+            shading_units_difference = other.shading_units - self.shading_units
+            shading_units_difference_str = "{:+d} ({:+.1%})".format(
+                shading_units_difference, shading_units_difference / self.shading_units
+            ) if shading_units_difference else ""
+        else:
+            shading_units_difference_str = ""
+
+        if self.texture_mapping_units and other.texture_mapping_units:
+            texture_mapping_units_difference = other.texture_mapping_units - self.texture_mapping_units
+            texture_mapping_units_difference_str = "{:+d} ({:+.1%})".format(
+                texture_mapping_units_difference, texture_mapping_units_difference / self.texture_mapping_units
+            ) if texture_mapping_units_difference else ""
+        else:
+            texture_mapping_units_difference_str = ""
+
+        if self.render_output_processors and other.render_output_processors:
+            render_output_processors_difference = other.render_output_processors - self.render_output_processors
+            render_output_processors_difference_str = "{:+d} ({:+.1%})".format(
+                render_output_processors_difference, render_output_processors_difference / self.render_output_processors
+            ) if render_output_processors_difference else ""
+        else:
+            render_output_processors_difference_str = ""
+
+        if self.streaming_multiprocessors and other.streaming_multiprocessors:
+            streaming_multiprocessors_difference = other.streaming_multiprocessors - self.streaming_multiprocessors
+            streaming_multiprocessors_difference_str = "{:+d} ({:+.1%})".format(
+                streaming_multiprocessors_difference, streaming_multiprocessors_difference / self.streaming_multiprocessors
+            ) if streaming_multiprocessors_difference else ""
+        else:
+            streaming_multiprocessors_difference_str = ""
+
+        if self.tensor_cores and other.tensor_cores:
+            tensor_cores_difference = other.tensor_cores - self.tensor_cores
+            if tensor_cores_difference and self.tensor_cores:
+                tensor_cores_difference_str = "{:+d} ({:+.1%})".format(
+                    tensor_cores_difference, tensor_cores_difference / self.tensor_cores
+                ) if tensor_cores_difference else ""
+            else:
+                tensor_cores_difference_str = ""
+        else:
+            tensor_cores_difference_str = ""
+
+        if self.ray_tracing_cores and other.ray_tracing_cores:
+            ray_tracing_cores_difference = other.ray_tracing_cores - self.ray_tracing_cores
+            ray_tracing_cores_difference_str = "{:+d} ({:+.1%})".format(
+                ray_tracing_cores_difference, ray_tracing_cores_difference / self.ray_tracing_cores
+            ) if ray_tracing_cores_difference else ""
+        else:
+            ray_tracing_cores_difference_str = ""
+
+        if self.l1_cache_kb and other.l1_cache_kb:
+            l1_cache_difference = other.l1_cache_kb - self.l1_cache_kb
+            l1_cache_difference_str = "{:+.1f} KB ({:+.1%})".format(
+                l1_cache_difference, l1_cache_difference / self.l1_cache_kb
+            ) if l1_cache_difference else ""
+        else:
+            l1_cache_difference_str = ""
+
+        if self.l2_cache_mb and other.l2_cache_mb:
+            l2_cache_difference = other.l2_cache_mb - self.l2_cache_mb
+            l2_cache_difference_str = "{:+.1f} MB ({:+.1%})".format(
+                l2_cache_difference, l2_cache_difference / self.l2_cache_mb
+            ) if l2_cache_difference else ""
+        else:
+            l2_cache_difference_str = ""
+
+        if self.thermal_design_power_w and other.thermal_design_power_w:
+            thermal_design_power_difference = other.thermal_design_power_w - self.thermal_design_power_w
+            thermal_design_power_difference_str = "{:+d} W ({:+.1%})".format(
+                thermal_design_power_difference, thermal_design_power_difference / self.thermal_design_power_w
+            ) if thermal_design_power_difference else ""
+        else:
+            thermal_design_power_difference_str = ""
+
+        if other.board_length_mm and self.board_length_mm:
+            board_length_difference = other.board_length_mm - self.board_length_mm
+            board_length_difference_str = "{:+.1f} mm ({:+.1%})".format(
+                board_length_difference, board_length_difference / self.board_length_mm
+            ) if board_length_difference else ""
+        else:
+            board_length_difference_str = ""
+
+        if other.board_width_mm and self.board_width_mm:
+            board_width_difference = other.board_width_mm - self.board_width_mm
+            board_width_difference_str = "{:+.1f} mm ({:+.1%})".format(
+                board_width_difference, board_width_difference / self.board_width_mm
+            ) if board_width_difference else ""
+        else:
+            board_width_difference_str = ""
+
+        if other.suggested_psu_w and self.suggested_psu_w:
+            suggested_psu_difference = other.suggested_psu_w - self.suggested_psu_w
+            suggested_psu_difference_str = "{:+d} W ({:+.1%})".format(
+                suggested_psu_difference, suggested_psu_difference / self.suggested_psu_w
+            ) if suggested_psu_difference else ""
+        else:
+            suggested_psu_difference_str = ""
+
+        if other.pixel_rate_gpixel_s and self.pixel_rate_gpixel_s:
+            pixel_rate_difference = other.pixel_rate_gpixel_s - self.pixel_rate_gpixel_s
+            pixel_rate_difference_str = "{:+.1f} GPixel/s ({:+.1%})".format(
+                pixel_rate_difference, pixel_rate_difference / self.pixel_rate_gpixel_s
+            ) if pixel_rate_difference else ""
+        else:
+            pixel_rate_difference_str = ""
+
+        if other.texture_rate_gtexel_s and self.texture_rate_gtexel_s:
+            texture_rate_difference = other.texture_rate_gtexel_s - self.texture_rate_gtexel_s
+            texture_rate_difference_str = "{:+.1f} GTexel/s ({:+.1%})".format(
+                texture_rate_difference, texture_rate_difference / self.texture_rate_gtexel_s
+            ) if texture_rate_difference else ""
+        else:
+            texture_rate_difference_str = ""
+
+        if other.half_float_performance_gflop_s and self.half_float_performance_gflop_s:
+            half_float_performance_difference = other.half_float_performance_gflop_s - self.half_float_performance_gflop_s
+            value, unit = reduce_units(
+                half_float_performance_difference,
+                ["GFLOP", "TFLOP", "PFLOP", "EFLOP", "ZFLOP", "YFLOP"],
+                threshold=UNIT_THRESHOLD,
+            )
+            half_float_performance_difference_str = "{:+.1f} {:s}/s ({:+.1%})".format(
+                value, unit, half_float_performance_difference / self.half_float_performance_gflop_s
+            ) if half_float_performance_difference else ""
+        else:
+            half_float_performance_difference_str = ""
+
+        if other.single_float_performance_gflop_s and self.single_float_performance_gflop_s:
+            single_float_performance_difference = other.single_float_performance_gflop_s - self.single_float_performance_gflop_s
+            value, unit = reduce_units(
+                single_float_performance_difference,
+                ["GFLOP", "TFLOP", "PFLOP", "EFLOP", "ZFLOP", "YFLOP"],
+                threshold=UNIT_THRESHOLD,
+            )
+            single_float_performance_difference_str = "{:+.1f} {:s}/s ({:+.1%})".format(
+                value, unit, single_float_performance_difference / self.single_float_performance_gflop_s
+            ) if single_float_performance_difference else ""
+        else:
+            single_float_performance_difference_str = ""
+
+        if other.double_float_performance_gflop_s and self.double_float_performance_gflop_s:
+            double_float_performance_difference = other.double_float_performance_gflop_s - self.double_float_performance_gflop_s
+            value, unit = reduce_units(
+                double_float_performance_difference,
+                ["GFLOP", "TFLOP", "PFLOP", "EFLOP", "ZFLOP", "YFLOP"],
+                threshold=UNIT_THRESHOLD,
+            )
+            double_float_performance_difference_str = "{:+.1f} {:s}/s ({:+.1%})".format(
+                value, unit, double_float_performance_difference / self.double_float_performance_gflop_s
+            ) if double_float_performance_difference else ""
+        else:
+            double_float_performance_difference_str = ""
+
+        return [
+            ("GPU Name", name_difference_str),
+            ("Manufacturer", manufacturer_difference_str),
+            ("Architecture", architecture_difference_str),
+            ("Foundry", foundry_difference_str),
+            ("Process Size", process_size_difference_str),
+            ("Transistor Count", transistor_count_difference_str),
+            ("Transistor Density", transistor_density_difference_str),
+            ("Die Size", die_size_difference_str),
+            ("Chip Package", chip_package_difference_str),
+            ("Release Date", release_date_difference_str),
+            ("Generation", generation_difference_str),
+            ("Bus Interface", bus_interface_difference_str),
+            ("Base Clock", base_clock_difference_str),
+            ("Boost Clock", boost_clock_difference_str),
+            ("Memory Clock", memory_clock_difference_str),
+            ("Memory Size", memory_size_difference_str),
+            ("Memory Type", memory_type_difference_str),
+            ("Memory Bus", memory_bus_difference_str),
+            ("Memory Bandwidth", memory_bandwidth_difference_str),
+            ("Shading Units", shading_units_difference_str),
+            ("Texture Mapping Units", texture_mapping_units_difference_str),
+            ("Render Output Processors", render_output_processors_difference_str),
+            ("Streaming Multiprocessors", streaming_multiprocessors_difference_str),
+            ("Tensor Cores", tensor_cores_difference_str),
+            ("Ray Tracing Cores", ray_tracing_cores_difference_str),
+            ("L1 Cache", l1_cache_difference_str),
+            ("L2 Cache", l2_cache_difference_str),
+            ("Thermal Design Power", thermal_design_power_difference_str),
+            ("Board Length", board_length_difference_str),
+            ("Board Width", board_width_difference_str),
+            ("Suggested PSU", suggested_psu_difference_str),
+            ("Power Connectors", power_connectors_difference_str),
+            ("Display Connectors", display_connectors_difference_str),
+            ("DirectX Version", directx_version_difference_str),
+            ("OpenGL Version", opengl_version_difference_str),
+            ("Vulkan Version", vulkan_version_difference_str),
+            ("OpenCL Version", opencl_version_difference_str),
+            ("CUDA Version", cuda_version_difference_str),
+            ("Shader Model Version", shader_model_version_difference_str),
+            ("Pixel Rate", pixel_rate_difference_str),
+            ("Texture Rate", texture_rate_difference_str),
+            ("Half Float Performance", half_float_performance_difference_str),
+            ("Single Float Performance", single_float_performance_difference_str),
+            ("Double Float Performance", double_float_performance_difference_str),
         ]
 
     def tabulate(self) -> str:

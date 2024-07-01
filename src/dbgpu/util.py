@@ -1,14 +1,52 @@
 from __future__ import annotations
 
+from re import sub, IGNORECASE
 from typing import Any, Iterable, List, Tuple, Union
 from itertools import islice
 from datetime import datetime, date
 
 __all__ = [
+    "safe_name",
     "chunk_iterable",
     "reduce_units",
     "json_serialize",
 ]
+
+def safe_name(input_str: str) -> str:
+    """
+    Convert a name to a safe, lowercase, trimmed string.
+
+    >>> safe_name("Hello, World!")
+    'hello-world'
+    >>> safe_name("  Hello, World!  ")
+    'hello-world'
+    >>> safe_name("[40GB] PCI-E 3.0 x16")
+    '40gb-pci-e-3-0-x16'
+    >>> safe_name("[40 GB] PCI-E 3.0 x16")
+    '40gb-pci-e-3-0-x16'
+    """
+    # Remove leading and trailing whitespace
+    input_str = input_str.strip()
+
+    # Standardize "GB" and "GiB" to remove spaces between numbers and these units
+    input_str = sub(r'(\d+)[\s\-\._,]+(GB|GiB)', r'\1\2', input_str, flags=IGNORECASE)
+
+    # Remove special characters except spaces and alphanumeric characters
+    input_str = sub(r'[^a-zA-Z0-9\s]', ' ', input_str)
+
+    # Replace multiple spaces with a single space
+    input_str = sub(r'\s+', ' ', input_str)
+
+    # Remove leading and trailing whitespace
+    input_str = input_str.strip()
+
+    # Replace spaces with dashes
+    input_str = sub(r'\s', '-', input_str)
+
+    # Convert to lowercase
+    input_str = input_str.lower()
+
+    return input_str
 
 def chunk_iterable(
     iterable: Iterable[Any],
