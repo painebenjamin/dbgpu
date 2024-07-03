@@ -1,6 +1,21 @@
-# DBGPU
-
-A small, easy-to-use open source database of over 2000 GPUs with architecture, manufacturing, API support and performance details sourced from [TechPowerUp](https://www.techpowerup.com/gpu-specs/).
+<div align="center">
+<img src="https://github.com/painebenjamin/dbgpu/assets/57536852/a632cd1e-337d-4819-aa3f-4d13e1259fe4" />
+</div>
+<hr />
+<p align="center">
+A small, easy-to-use open source database of over 2000 GPUs with architecture, manufacturing, API support and performance details sourced from <a href="https://www.techpowerup.com/gpu-specs/" target="_blank">TechPowerUp</a>.
+</p>
+<p align="center">
+    <img src="https://img.shields.io/static/v1?label=painebenjamin&message=dbgpu&logo=github&color=111111" alt="painebenjamin - dbgpu">
+    <img src="https://img.shields.io/github/stars/painebenjamin/dbgpu?style=social" alt="stars - dbgpu">
+    <img src="https://img.shields.io/github/forks/painebenjamin/dbgpu?style=social" alt="forks - dbgpu"><br />
+    <a href="https://github.com/painebenjamin/dbgpu/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-MIT-111111" alt="License"></a>
+    <a href="https://github.com/painebenjamin/dbgpu/releases/"><img src="https://img.shields.io/github/tag/painebenjamin/dbgpu?include_prereleases=&sort=semver&color=111111" alt="GitHub tag"></a>
+    <a href="https://github.com/painebenjamin/dbgpu/releases/"><img alt="GitHub release (with filter)" src="https://img.shields.io/github/v/release/painebenjamin/dbgpu?color=111111"></a>
+    <a href="https://pypi.org/project/dbgpu"><img alt="PyPI - Version" src="https://img.shields.io/pypi/v/dbgpu?color=111111"></a>
+    <a href="https://github.com/painebenjamin/dbgpu/releases/"><img alt="GitHub all releases" src="https://img.shields.io/github/downloads/painebenjamin/dbgpu/total?logo=github&color=111111"></a>
+    <a href="https://pypi.org/project/dbgpu"><img alt="PyPI - Downloads" src="https://img.shields.io/pypi/dm/dbgpu?logo=python&logoColor=white&color=111111"></a>
+</p>
 
 # Installation
 
