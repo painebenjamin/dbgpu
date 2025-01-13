@@ -108,10 +108,10 @@ class GPUDatabase:
         Uses fuzzy matching to find the GPU specification with the given name.
         """
         try:
-            from thefuzz import process # type: ignore[import]
+            from thefuzz import process # type: ignore[import-not-found,import-untyped,unused-ignore]
         except ImportError:
             try:
-                from fuzzywuzzy import process # type: ignore[import]
+                from fuzzywuzzy import process # type: ignore[import-not-found,import-untyped,unused-ignore]
             except ImportError:
                 raise ImportError("thefuzz or fuzzywuzzy is required to search for GPU specifications. Run `pip install thefuzz` to install it.")
         [(name, score)] = process.extract(name, self.names, limit=1)

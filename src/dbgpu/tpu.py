@@ -126,7 +126,12 @@ class TechPowerUp:
             raise
 
         soup = BeautifulSoup(response.text, "html.parser")
-        specs: Dict[str, Dict[str, Any]] = {}
+        specs: Dict[str, Dict[str, Any]] = {
+            "TechPowerUp": {
+                "ID": url.split(".")[-1],
+                "URL": url
+            }
+        }
 
         spec_sections = soup.find_all("section", {"class": "details"})
         for spec_section in spec_sections:

@@ -76,6 +76,8 @@ class GPUSpecification:
     half_float_performance_gflop_s: Optional[float]  # Half-precision floating point performance in GFLOPS
     single_float_performance_gflop_s: Optional[float]  # Single-precision floating point performance in GFLOPS
     double_float_performance_gflop_s: Optional[float]  # Double-precision floating point performance in GFLOPS
+    tpu_id: Optional[str]  # ID of the GPU on TechPowerUp
+    tpu_url: Optional[str]  # URL of the GPU on TechPowerUp
 
     @classmethod
     def _standardize(cls, value: str) -> str:
@@ -613,6 +615,8 @@ class GPUSpecification:
             double_float_performance_gflop_s=cls._get_gigaflops_from_string(
                 performance.get("FP64 (double)", None)
             ),
+            tpu_id=data["TechPowerUp"]["ID"],
+            tpu_url=data["TechPowerUp"]["URL"]
         )
         return cls(**data)
 
@@ -968,6 +972,8 @@ class GPUSpecification:
             ("Half Float Performance", self.half_float_performance_str),
             ("Single Float Performance", self.single_float_performance_str),
             ("Double Float Performance", self.double_float_performance_str),
+            ("TechPowerUp ID", self.tpu_id),
+            ("TechPowerUp URL", self.tpu_url),
         ]
 
     def labeled_comparison_fields(self, other: GPUSpecification) -> List[Tuple[str, str]]:
