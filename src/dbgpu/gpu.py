@@ -193,7 +193,7 @@ class GPUSpecification:
         num_bytes = float(match.group(2))
         # Sometimes TPU interchanges base 2 and base 10, we use 10
         if num_bytes % 256 == 0:
-            num_bytes /= 256 * 250 # base 2 to base 10
+            num_bytes /= 256 / 250 # base 2 to base 10
 
         unit = match.group(4)[0]
 
