@@ -67,7 +67,7 @@ class TechPowerUp:
         """
         from bs4 import BeautifulSoup
         url = f"{self.base_url}{self.list_url}"
-        params = {"mfgr": manufacturer, "released": year}
+        params = {"f": f"mfgr_{manufacturer}~year_{year}"}
         try:
             response = self.session.get(url, params=params, timeout=self.timeout)
             response.raise_for_status()
@@ -85,17 +85,17 @@ class TechPowerUp:
             raise
 
         soup = BeautifulSoup(response.text, "html.parser")
-        gpu_table = soup.find("table", {"class": "processors"})
+        gpu_table = soup.find("table", {"class": "items-desktop-table"})
 
         if not gpu_table:
-            warnings.warn(f"No data available for year {year}")
+            warnings.warn(f"No data available for year {year} and manufacturer {manufacturer}.")
             return
 
-        for row in gpu_table.find_all("tr")[2:]:  # type: ignore[union-attr]
-            cells = row.find_all("td")
-            name_cell = cells[0]
-            link = name_cell.find("a")["href"]
-            gpu_name = name_cell.get_text(strip=True)
+        items = gpu_table.find_all("div", {"class": "item-name"})
+
+        for item in items:
+            link = item.find("a")["href"]
+            gpu_name = item.get_text(strip=True)
             yield gpu_name, link
 
     def fetch_gpu_details(
